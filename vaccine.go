@@ -18,7 +18,7 @@ type SmartContract struct {
 type Person struct {
 	Name    string `json:”name”`
 	Surname string `json:”surname”`
-	Id      int    `json:”id”`
+	Licence string `json:”id”`
 }
 
 type Conclusion struct {
@@ -50,16 +50,16 @@ type QueryConclusionResult struct {
 }
 
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	led1 := Person{Name: "John", Surname: "Smith", Id: 1}
-	led2 := Person{Name: "Elizabeth", Surname: "Winter", Id: 2}
-	led3 := Person{Name: "Jim", Surname: "Badley", Id: 3}
+	led1 := Person{Name: "John", Surname: "Smith", Licence: "R-001"}
+	led2 := Person{Name: "Elizabeth", Surname: "Winter", Licence: "R-002"}
+	led3 := Person{Name: "Jim", Surname: "Badley", Licence: "R-003"}
 
-	res1 := []Person{Person{Name: "Fei", Surname: "Chu", Id: 4},
-		Person{Name: "Helena", Surname: "Gardner", Id: 5},
-		Person{Name: "Simon", Surname: "Sutton", Id: 6}}
-	res2 := []Person{Person{Name: "Milo", Surname: "Pacher", Id: 7},
-		Person{Name: "Andrew", Surname: "Human", Id: 8}}
-	res3 := []Person{Person{Name: "Nicolas", Surname: "Contino", Id: 9}}
+	res1 := []Person{Person{Name: "Fei", Surname: "Chu", Licence: "R-004"},
+		Person{Name: "Helena", Surname: "Gardner", Licence: "R-005"},
+		Person{Name: "Simon", Surname: "Sutton", Licence: "R-006"}}
+	res2 := []Person{Person{Name: "Milo", Surname: "Pacher", Licence: "R-007"},
+		Person{Name: "Andrew", Surname: "Human", Licence: "R-008"}}
+	res3 := []Person{Person{Name: "Nicolas", Surname: "Contino", Licence: "R-009"}}
 
 	t1s, _ := time.Parse(shortForm, "2020-Feb-03")
 	t1e, _ := time.Parse(shortForm, "2020-May-20")
@@ -93,12 +93,12 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 func (s *SmartContract) CreateExperiment(ctx contractapi.TransactionContextInterface, experimentKey string, company string, description string,
-	leaderName string, leaderSurname string, leaderID int, vaccineName string, disease string, startTime string, endTime string) error {
+	leaderName string, leaderSurname string, leaderLicence string, vaccineName string, disease string, startTime string, endTime string) error {
 
 	leader := Person{
 		Name:    leaderName,
 		Surname: leaderSurname,
-		Id:      leaderID,
+		Licence: leaderLicence,
 	}
 
 	researchers := []Person{}
@@ -175,7 +175,7 @@ func (s *SmartContract) AddConclusion(
 	experimentKey string,
 	authorName string,
 	authorSurname string,
-	authorID int,
+	authorLicence string,
 	content string) error {
 
 	experimentBytes, err := ctx.GetStub().GetState(experimentKey)
@@ -194,7 +194,7 @@ func (s *SmartContract) AddConclusion(
 	author := Person{
 		Name:    authorName,
 		Surname: authorSurname,
-		Id:      authorID,
+		Licence: authorLicence,
 	}
 
 	conclusion := Conclusion{
@@ -210,13 +210,12 @@ func (s *SmartContract) AddConclusion(
 	return ctx.GetStub().PutState(experimentKey, updatedExperimentBytes)
 }
 
-
 func (s *SmartContract) AddResearcherToExperiment(
 	ctx contractapi.TransactionContextInterface,
 	experimentKey string,
 	name string,
 	surname string,
-	id int) error {
+	licence string) error {
 
 	experimentBytes, err := ctx.GetStub().GetState(experimentKey)
 
@@ -234,16 +233,15 @@ func (s *SmartContract) AddResearcherToExperiment(
 	researcher := Person{
 		Name:    name,
 		Surname: surname,
-		Id:      id,
+		Licence: licence,
 	}
 
 	experiment.Researchers = append(experiment.Researchers, researcher)
 
 	updatedExperimentBytes, _ := json.Marshal(experiment)
 
-	return ctx.GetStub().PutState(experimentKey, experimentBytes)
+	return ctx.GetStub().PutState(experimentKey, updatedExperimentBytes)
 }
-
 
 func main() {
 	chaincode, err := contractapi.NewChaincode(new(SmartContract))
@@ -257,4 +255,3 @@ func main() {
 		fmt.Printf("Error while starting chaincode: %s", err.Error())
 	}
 }
-
