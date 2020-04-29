@@ -210,6 +210,41 @@ func (s *SmartContract) AddConclusion(
 	return ctx.GetStub().PutState(experimentKey, updatedExperimentBytes)
 }
 
+
+func (s *SmartContract) AddResearcherToExperiment(
+	ctx contractapi.TransactionContextInterface,
+	experimentKey string,
+	name string,
+	surname string,
+	id int) error {
+
+	experimentBytes, err := ctx.GetStub().GetState(experimentKey)
+
+	if err != nil {
+		return err
+	}
+
+	if experimentBytes == nil {
+		return fmt.Errorf("Experiment %s does not exist", experimentKey)
+	}
+
+	experiment := new(VaccineExperiment)
+	_ = json.Unmarshal(experimentBytes, experiment)
+
+	researcher := Person{
+		Name:    name,
+		Surname: surname,
+		Id:      id,
+	}
+
+	experiment.Researchers = append(experiment.Researchers, researcher)
+
+	updatedExperimentBytes, _ := json.Marshal(experiment)
+
+	return ctx.GetStub().PutState(experimentKey, experimentBytes)
+}
+
+
 func main() {
 	chaincode, err := contractapi.NewChaincode(new(SmartContract))
 
@@ -222,3 +257,4 @@ func main() {
 		fmt.Printf("Error while starting chaincode: %s", err.Error())
 	}
 }
+
