@@ -1,10 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
-	"encoding/json"
-	"strconv"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -37,18 +36,15 @@ type VaccineExperiment struct {
 	EndTime     time.Time    `json:”endTime”`
 }
 
-
 type QueryExperimentResult struct {
 	Key    string `json:"Key"`
 	Record *VaccineExperiment
 }
 
-
 type QueryConclusionResult struct {
-	Key    string `json:"Key"`
-	Record *Conclusion
+	Key     string `json:"Key"`
+	Records []Conclusion
 }
-
 
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	led1 := Person { Name: "John", Surname: "Smith", Id: 1}
@@ -95,7 +91,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 
 
 func main() {
-
 	chaincode, err := contractapi.NewChaincode(new(SmartContract))
 
 	if err != nil {
@@ -106,4 +101,66 @@ func main() {
 	if err := chaincode.Start(); err != nil {
 		fmt.Printf("Error while starting chaincode: %s", err.Error())
 	}
+}
+
+func (s *SmartContract) QueryConclusions(ctx contractapi.TransactionContextInterface, experimentKey string) (*QueryConclusionResult, error) {
+	experimentBytes, err := ctx.GetStub().GetState(experimentKey)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect: %s", err.Error())
+	}
+
+	if experimentBytes == nil {
+		return nil, fmt.Errorf("Experiment %s does not exist", experimentKey)
+	}
+
+	experiment := new(VaccineExperiment)
+	_ = json.Unmarshal(experimentBytes, experiment)
+
+	result := QueryConclusionResult{
+		Key:     experimentKey,
+		Records: experiment.Conclusions,
+	}
+
+	return &result, nil
+}
+
+func (s *SmartContract) AddConclusion(
+	ctx contractapi.TransactionContextInterface,
+	experimentKey string,
+	authorName string,
+	authorSurname string,
+	authorID int,
+	content string) error {
+
+	experimentBytes, err := ctx.GetStub().GetState(experimentKey)
+
+	if err != nil {
+		return err
+	}
+
+	if experimentBytes == nil {
+		return fmt.Errorf("Experiment %s does not exist", experimentKey)
+	}
+
+	experiment := new(VaccineExperiment)
+	_ = json.Unmarshal(experimentBytes, experiment)
+
+	author := Person{
+		Name:    authorName,
+		Surname: authorSurname,
+		Id:      authorID,
+	}
+
+	conclusion := Conclusion{
+		Author:       author,
+		Content:      content,
+		CreationTime: time.Now(),
+	}
+
+	experiment.Conclusions = append(experiment.Conclusions, conclusion)
+
+	updatedExperimentBytes, _ := json.Marshal(experiment)
+
+	return ctx.GetStub().PutState(experimentKey, experimentBytes)
 }
