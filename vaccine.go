@@ -92,17 +92,60 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	return nil
 }
 
-func main() {
-	chaincode, err := contractapi.NewChaincode(new(SmartContract))
+func (s *SmartContract) CreateExperiment(ctx contractapi.TransactionContextInterface, experimentKey string, company string, description string,
+	leaderName string, leaderSurname string, leaderID int, vaccineName string, disease string, startTime string, endTime string) error {
+
+	leader := Person{
+		Name:    leaderName,
+		Surname: leaderSurname,
+		Id:      leaderID,
+	}
+
+	researchers := []Person{}
+	conclusions := []Conclusion{}
+	start, err1 := time.Parse(shortForm, startTime)
+	end, err2 := time.Parse(shortForm, endTime)
+
+	if err1 != nil {
+		return fmt.Errorf("Wrong date: $s", err1.Error())
+	}
+	if err2 != nil {
+		return fmt.Errorf("Wrong date: $s", err2.Error())
+	}
+
+	experiment := VaccineExperiment{
+		Company:     company,
+		Description: description,
+		Leader:      leader,
+		Researchers: researchers,
+		VaccineName: vaccineName,
+		Disease:     disease,
+		Conclusions: conclusions,
+		StartTime:   start,
+		EndTime:     end,
+	}
+
+	experimentAsBytes, _ := json.Marshal(experiment)
+
+	return ctx.GetStub().PutState(experimentKey, experimentAsBytes)
+}
+
+func (s *SmartContract) QueryExperiment(ctx contractapi.TransactionContextInterface, experimentKey string) (*VaccineExperiment, error) {
+
+	experimentAsBytes, err := ctx.GetStub().GetState(experimentKey)
 
 	if err != nil {
-		fmt.Printf("Error while creating chaincode: %s", err.Error())
-		return
+		return nil, fmt.Errorf("Failed to connect: %s", err.Error())
 	}
 
-	if err := chaincode.Start(); err != nil {
-		fmt.Printf("Error while starting chaincode: %s", err.Error())
+	if experimentAsBytes == nil {
+		return nil, fmt.Errorf("Experiment %s does not exist", experimentKey)
 	}
+
+	experiment := new(VaccineExperiment)
+	_ = json.Unmarshal(experimentAsBytes, experiment)
+
+	return experiment, nil
 }
 
 func (s *SmartContract) QueryConclusions(ctx contractapi.TransactionContextInterface, experimentKey string) (*QueryConclusionResult, error) {
@@ -165,4 +208,17 @@ func (s *SmartContract) AddConclusion(
 	updatedExperimentBytes, _ := json.Marshal(experiment)
 
 	return ctx.GetStub().PutState(experimentKey, updatedExperimentBytes)
+}
+
+func main() {
+	chaincode, err := contractapi.NewChaincode(new(SmartContract))
+
+	if err != nil {
+		fmt.Printf("Error while creating chaincode: %s", err.Error())
+		return
+	}
+
+	if err := chaincode.Start(); err != nil {
+		fmt.Printf("Error while starting chaincode: %s", err.Error())
+	}
 }
