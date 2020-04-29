@@ -37,6 +37,20 @@ type VaccineExperiment struct {
 	EndTime     time.Time    `json:”endTime”`
 }
 
+
+type QueryExperimentResult struct {
+	Key    string `json:"Key"`
+	Record *VaccineExperiment
+}
+
+
+type QueryConclusionResult struct {
+	Key    string `json:"Key"`
+	Record *Conclusion
+}
+
+
+
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	return nil
 }
