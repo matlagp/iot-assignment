@@ -8,6 +8,8 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+const shortForm = "2006-Jan-02"
+
 type SmartContract struct {
 	contractapi.Contract
 }
