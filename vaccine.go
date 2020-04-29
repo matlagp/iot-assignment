@@ -94,11 +94,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 
-
-func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	return nil
-}
-
 func main() {
 
 	chaincode, err := contractapi.NewChaincode(new(SmartContract))
