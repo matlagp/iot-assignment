@@ -61,7 +61,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		Person{Name: "Andrew", Surname: "Human", Id: 8}}
 	res3 := []Person{Person{Name: "Nicolas", Surname: "Contino", Id: 9}}
 
-	const shortForm = "2000-Jan-01"
 	t1s, _ := time.Parse(shortForm, "2020-Feb-03")
 	t1e, _ := time.Parse(shortForm, "2020-May-20")
 	t2s, _ := time.Parse(shortForm, "2018-Jan-15")
